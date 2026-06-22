@@ -9,17 +9,19 @@ set -e
 #  用法:
 #    curl -fsSL https://raw.githubusercontent.com/0Chencc/clawgod/main/install.sh | bash
 #    # 或
-#    bash install.sh [--version 2.1.89]
+#    bash install.sh [--version 2.1.89] [--no-upgrade]
 # ─────────────────────────────────────────────────────────
 
 CLAWGOD_DIR="$HOME/.clawgod"
 BIN_DIR="$HOME/.local/bin"
 VERSION="${CLAWGOD_VERSION:-latest}"
+NO_UPGRADE="${CLAWGOD_NO_UPGRADE:-}"
 
 # Parse args
 while [[ $# -gt 0 ]]; do
   case $1 in
     --version) VERSION="$2"; shift 2 ;;
+    --no-upgrade) NO_UPGRADE=1; shift ;;
     --uninstall) UNINSTALL=1; shift ;;
     *) shift ;;
   esac
@@ -151,6 +153,22 @@ if ! command -v rg &>/dev/null; then
   exit 1
 fi
 info "ripgrep: $(rg --version | head -1)"
+
+# ─── Handle --no-upgrade (skip download, re-patch only) ──────────────
+mkdir -p "$CLAWGOD_DIR" "$BIN_DIR"
+
+if [ "$NO_UPGRADE" = "1" ]; then
+  if [ ! -f "$CLAWGOD_DIR/cli.original.cjs" ]; then
+    warn "--no-upgrade requires an existing installation."
+    warn "Run a full install first (without --no-upgrade)."
+    exit 1
+  fi
+  if [ -f "$CLAWGOD_DIR/cli.original.cjs.bak" ]; then
+    cp "$CLAWGOD_DIR/cli.original.cjs.bak" "$CLAWGOD_DIR/cli.original.cjs"
+    info "Restored clean cli.original.cjs from backup"
+  fi
+  info "Skipping download (--no-upgrade)"
+else
 
 # ─── Locate native Bun binary (cli.js source) ──────────────────────────
 # v2.1.113+ ships a Bun standalone executable as the only canonical form.
@@ -682,6 +700,8 @@ fi
 
 info "cli.original.cjs ready ($NATIVE_BIN_LABEL)"
 
+fi  # end --no-upgrade skip
+
 # ─── Write re-patch helper (used by wrapper on version drift) ─────────
 
 cat > "$CLAWGOD_DIR/repatch.mjs" << 'REPATCH_EOF'
@@ -1008,6 +1028,11 @@ const patches = [
       const psB64 = Buffer.from(psScript, 'utf16le').toString('base64');
       return (
         prefix +
+        `const _ui=process.argv.findIndex(a=>a==="update"||a==="upgrade");` +
+        `const _ua=_ui>=0?process.argv.slice(_ui+1):[];` +
+        `const _vi=_ua.indexOf("--version");` +
+        `if(_vi>=0&&_ua[_vi+1])process.env.CLAWGOD_VERSION=_ua[_vi+1];` +
+        `if(_ua.includes("--no-upgrade"))process.env.CLAWGOD_NO_UPGRADE="1";` +
         `process.stderr.write("[clawgod] 'claude update' is handled by clawgod self-update.\\n[clawgod] To leave clawgod and use vanilla update: bash ~/.clawgod/install.sh --uninstall\\n[clawgod] Continuing now\\u2026\\n");` +
         `const _w=process.platform==='win32';` +
         `const _c=_w?['powershell','-NoProfile','-EncodedCommand','${psB64}']:['bash','-c','curl -fsSL https://github.com/0Chencc/clawgod/releases/latest/download/install.sh | bash'];` +
@@ -1454,7 +1479,10 @@ dim "  claude.orig       — Run original unpatched Claude Code"
 echo ""
 dim "  Updates: 'claude update' is patched to route through this installer."
 dim "  Just run it as usual — pulls latest Anthropic release + re-patches"
-dim "  in one step. To leave clawgod and use vanilla update:"
+dim "  in one step. Extra options:"
+dim "    claude update --version 2.1.180   (install a specific version)"
+dim "    claude update --no-upgrade        (re-patch without downloading)"
+dim "  To leave clawgod and use vanilla update:"
 dim "    bash ~/.clawgod/install.sh --uninstall"
 echo ""
 warn "  If 'claude' still runs the old version, restart your terminal or run: hash -r"

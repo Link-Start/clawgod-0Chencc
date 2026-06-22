@@ -121,6 +121,15 @@ A `.source-version` stamp in `~/.clawgod/` records which native version was patc
 
 **Just run `claude update` as usual.** ClawGod patches the command to route through its own installer, which pulls the current Anthropic release from npm (`@anthropic-ai/claude-code-<plat>@latest`), re-extracts cli.js, re-applies patches, and rewrites the launcher. So the upstream update command keeps working the way you expect — you get the latest Claude, with patches still applied, in one step.
 
+Extra options:
+
+```bash
+claude update --version 2.1.180   # Pin to a specific Claude Code version
+claude update --no-upgrade        # Re-patch without downloading (use existing cli.js)
+```
+
+`--version` is useful when a new release has issues and you want to stay on a known-good version. `--no-upgrade` re-applies the latest patches from the installer to the existing cli.js — handy when only the patcher has been updated.
+
 If you'd rather invoke the installer directly (same effect, both paths fetch the same upstream release and re-patch):
 
 **macOS / Linux:**

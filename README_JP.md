@@ -121,6 +121,15 @@ claude.orig         # オリジナル未修正版（自動バックアップ）
 
 **そのまま `claude update` を実行するだけで OK です。** ClawGod はこのコマンドを自身のインストーラへ流すようパッチしており、npm から Anthropic の現行リリース（`@anthropic-ai/claude-code-<plat>@latest`）を取得し、cli.js を再抽出、パッチを再適用、launcher を書き直します。そのため上流の `claude update` コマンドは期待通りに動作します——1 コマンドで最新の Claude を取得し、パッチも適用された状態を保てます。
 
+追加オプション：
+
+```bash
+claude update --version 2.1.180   # 特定の Claude Code バージョンに固定
+claude update --no-upgrade        # ダウンロードせず既存の cli.js に再パッチのみ
+```
+
+`--version` は新リリースに問題がある場合、動作確認済みバージョンに留まりたいときに便利です。`--no-upgrade` は既存の cli.js に最新のパッチを再適用します——パッチャのみ更新された場合（正規表現の修正等）、新しい Claude をダウンロードする必要がないときに最適です。
+
 直接インストーラを実行したい場合（効果は同じで、どちらも同じ上流リリースを取得してパッチを当て直します）：
 
 **macOS / Linux:**

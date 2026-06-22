@@ -121,6 +121,15 @@ claude.orig         # 原版未修改版本（自动备份）
 
 **直接照常跑 `claude update` 即可。** ClawGod 把这条命令 patch 成走自己的 installer——从 npm 拉 Anthropic 当前发布（`@anthropic-ai/claude-code-<plat>@latest`）、重新提取 cli.js、重新打补丁、重写 launcher。所以上游 `claude update` 命令对用户依然如常工作——一条命令拿到最新 Claude + 补丁仍然生效。
 
+额外选项：
+
+```bash
+claude update --version 2.1.180   # 锁定到指定 Claude Code 版本
+claude update --no-upgrade        # 不下载新版，只用最新 patcher 重新打补丁
+```
+
+`--version` 适用于新版有问题、想停留在已知稳定版本时。`--no-upgrade` 对现有 cli.js 重新应用最新 patch——当只有 patcher 更新了（修了正则）而不需要拉新 Claude 版本时特别好用。
+
 如果你想直接调 installer（效果一样，两条路径都会拉同一个上游 release 并重新 patch）:
 
 **macOS / Linux:**
