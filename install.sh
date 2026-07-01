@@ -1011,8 +1011,8 @@ const patches = [
     // Escape hatch printed on every run: `install.sh --uninstall` restores
     // claude.orig and lets vanilla `claude update` work again.
     name: "Redirect `claude update` to clawgod self-update",
-    pattern: /(\.command\("update"\)\.alias\("upgrade"\)\.description\("[^"]+"\)\.action\(async\(\)=>\{)/g,
-    replacer: (m, prefix) => {
+    pattern: /(\.command\("update"\)\.alias\("upgrade"\)\.description\("[^"]+"\))(\.action\(async\(\)=>\{)/g,
+    replacer: (m, chain, action) => {
       // PowerShell 5.1's Invoke-WebRequest ignores HTTP_PROXY/HTTPS_PROXY env
       // (only reads IE system proxy). Read env explicitly and pass via -Proxy
       // so it works on both PS 5.1 and PS 7. Use Invoke-RestMethod (irm) not
@@ -1027,7 +1027,7 @@ const patches = [
         "if($p){iex(irm -Proxy $p $u)}else{iex(irm $u)}";
       const psB64 = Buffer.from(psScript, 'utf16le').toString('base64');
       return (
-        prefix +
+        chain + '.allowUnknownOption()' + action +
         `const _ui=process.argv.findIndex(a=>a==="update"||a==="upgrade");` +
         `const _ua=_ui>=0?process.argv.slice(_ui+1):[];` +
         `const _vi=_ua.indexOf("--version");` +
