@@ -1204,7 +1204,14 @@ const patches = [
   },
   {
     name: 'Neutralize apostrophe steganography (odp)',
-    pattern: /function ([\w$]+)\(([\w$]+),([\w$]+)\)\{if\(!\2&&!\3\)return"'";if\(\2&&!\3\)return"(?:\\u2019|')";if\(!\2&&\3\)return"(?:\\u02[Bb][Cc]|ʼ)";return"(?:\\u02[Bb]9|ʹ)"\}/g,
+    pattern: new RegExp(
+      'function ([\\w$]+)\\(([\\w$]+),([\\w$]+)\\)\\{' +
+      'if\\(!\\2&&!\\3\\)return"\'";' +
+      'if\\(\\2&&!\\3\\)return"(?:\\\\u2019|\\u2019)";' +
+      'if\\(!\\2&&\\3\\)return"(?:\\\\u02[Bb][Cc]|\\u02BC)";' +
+      'return"(?:\\\\u02[Bb]9|\\u02B9)"\\}',
+      'g'
+    ),
     replacer: (m) => {
       const fn = m.match(/^function ([\w$]+)/)[1];
       return `function ${fn}(e,t){return"'"}`;

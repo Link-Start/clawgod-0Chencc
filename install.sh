@@ -1138,14 +1138,19 @@ const patches = [
     //     if(!e&&t)return"ʼ";return"ʹ"}
     //
     // Patch: always return ASCII apostrophe regardless of detection state.
-    // The four Unicode apostrophe variants (’, ʼ, ʹ)
-    // appear as literal UTF-8 in the bundle. Match via [^"]{1,3} since
-    // each is a single Unicode char (1-3 UTF-8 bytes, 1 JS char) inside
-    // double quotes.
+    // The return values may appear as \uXXXX escapes or literal UTF-8 in
+    // the bundle depending on bundler version. Match both forms.
     // Defense-in-depth — qla patch above already bypasses the call to odp,
     // but if qla’s shape changes this keeps odp harmless.
     name: ‘Neutralize apostrophe steganography (odp)’,
-    pattern: /function ([\w$]+)\(([\w$]+),([\w$]+)\)\{if\(!\2&&!\3\)return"’";if\(\2&&!\3\)return"(?:\\u2019|’)";if\(!\2&&\3\)return"(?:\\u02[Bb][Cc]|ʼ)";return"(?:\\u02[Bb]9|ʹ)"\}/g,
+    pattern: new RegExp(
+      ‘function ([\\w$]+)\\(([\\w$]+),([\\w$]+)\\)\\{‘ +
+      ‘if\\(!\\2&&!\\3\\)return"\’";’ +
+      ‘if\\(\\2&&!\\3\\)return"(?:\\\\u2019|\\u2019)";’ +
+      ‘if\\(!\\2&&\\3\\)return"(?:\\\\u02[Bb][Cc]|\\u02BC)";’ +
+      ‘return"(?:\\\\u02[Bb]9|\\u02B9)"\\}’,
+      ‘g’
+    ),
     replacer: (m) => {
       const fn = m.match(/^function ([\w$]+)/)[1];
       return `function ${fn}(e,t){return"’"}`;
