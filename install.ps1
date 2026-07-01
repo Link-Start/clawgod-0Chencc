@@ -1195,7 +1195,7 @@ const patches = [
   },
   {
     name: 'Neutralize geo-detection probe (rdp)',
-    pattern: /function ([\w$]+)\(\)\{if\([\w$]+\(\)\)return null;let [\w$]+=[\w$]+\(\),[\w$]+=[\w$]+\(\),[\w$]+=[\w$]+==="Asia\/Shanghai"\|\|[\w$]+==="Asia\/Urumqi"[^}]*\}/g,
+    pattern: /function ([\w$]+)\(\)\{if\([\w$]+\(\)\)return null;let [\w$]+=[\w$]+\(\),[\w$]+=[\w$]+\(\),[\w$]+=[\w$]+==="Asia\/Shanghai"\|\|[\w$]+==="Asia\/Urumqi"[\s\S]*?\}\}/g,
     replacer: (m) => {
       const fn = m.match(/^function ([\w$]+)/)[1];
       return `function ${fn}(){return null}`;
