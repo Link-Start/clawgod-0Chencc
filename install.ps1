@@ -26,6 +26,7 @@ if ($env:CLAWGOD_NO_UPGRADE -eq "1") { $NoUpgrade = [switch]$true }
 
 $ClawDir = Join-Path $env:USERPROFILE ".clawgod"
 $BinDir  = Join-Path $env:USERPROFILE ".local\bin"
+$ClawSelfVersion = "1.3.1"
 
 # ─── Colors ───────────────────────────────────────────
 
@@ -994,8 +995,32 @@ if (_realExecPath !== process.execPath) {
   });
 }
 
+// Update check — cached, non-blocking, 24h interval
+try {
+  const _ucFile = join(clawgodDir, '.update-check');
+  const _verFile = join(clawgodDir, '.clawgod-version');
+  if (existsSync(_verFile)) {
+    const _localVer = readFileSync(_verFile, 'utf8').trim();
+    let _uc = null;
+    try { if (existsSync(_ucFile)) _uc = JSON.parse(readFileSync(_ucFile, 'utf8')); } catch {}
+    if (_uc && _uc.v && _uc.v !== _localVer) {
+      process.stderr.write('[clawgod] v' + _uc.v + ' available (installed: v' + _localVer + ") — run 'claude update' to upgrade\n");
+    }
+    if (!_uc || Date.now() - (_uc.t || 0) > 86400000) {
+      fetch('https://api.github.com/repos/0Chencc/clawgod/releases/latest', {
+        headers: { 'User-Agent': 'clawgod' },
+        signal: AbortSignal.timeout(5000),
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        var v = (d.tag_name || '').replace(/^v/, '');
+        if (v) writeFileSync(_ucFile, JSON.stringify({ t: Date.now(), v: v }));
+      }).catch(function() {});
+    }
+  }
+} catch {}
+
 require('./cli.original.cjs');
 '@ | Set-Content (Join-Path $ClawDir "cli.cjs") -Encoding UTF8
+Set-Content (Join-Path $ClawDir ".clawgod-version") $ClawSelfVersion
 Write-OK "Wrapper created (cli.cjs)"
 
 # ─── Write universal patcher ──────────────────────────
