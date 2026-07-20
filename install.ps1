@@ -32,7 +32,7 @@ if ($env:CLAWGOD_LEAN_MAX -eq "1") { $LeanMax = [switch]$true }
 
 $ClawDir = Join-Path $env:USERPROFILE ".clawgod"
 $BinDir  = Join-Path $env:USERPROFILE ".local\bin"
-$ClawSelfVersion = "1.6.1"
+$ClawSelfVersion = "0.0.0-dev"  # injected by release workflow from git tag
 
 # ─── Colors ───────────────────────────────────────────
 
