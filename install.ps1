@@ -1299,6 +1299,9 @@ if (_realExecPath !== process.execPath) {
     value: _realExecPath,
     configurable: true,
   });
+  if (typeof Bun !== 'undefined' && !Bun.isStandaloneExecutable) {
+    Object.defineProperty(Bun, 'isStandaloneExecutable', { value: true, configurable: true });
+  }
 }
 
 // Lean mode toggle — --lean-off / --lean-on / --lean-max

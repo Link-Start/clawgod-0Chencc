@@ -1184,6 +1184,13 @@ if (_realExecPath !== process.execPath) {
     value: _realExecPath,
     configurable: true,
   });
+  // Daemon/fork spawns check Bun.isStandaloneExecutable to decide whether to
+  // include process.argv[1] (cli.cjs) in prefixArgs. Without this patch,
+  // fv()=false → DLt() prepends cli.cjs → "claude.orig cli.cjs respawn <id>"
+  // which the native binary silently ignores. See issue #133.
+  if (typeof Bun !== 'undefined' && !Bun.isStandaloneExecutable) {
+    Object.defineProperty(Bun, 'isStandaloneExecutable', { value: true, configurable: true });
+  }
 }
 
 // Lean mode toggle — --lean-off / --lean-on / --lean-max

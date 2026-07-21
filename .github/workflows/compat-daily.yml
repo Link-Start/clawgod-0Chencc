@@ -181,6 +181,79 @@ jobs:
           fi
           [[ $rc -eq 0 ]] || { echo "::error::claude --version exited $rc"; exit 1; }
 
+      - name: Functional checks — runtime invariants
+        # Verify that clawgod's monkey-patches produce correct runtime state.
+        # These catch issues like #133 (daemon/fork broken because
+        # Bun.isStandaloneExecutable wasn't patched) before users hit them.
+        shell: bash
+        run: |
+          # The launcher sets CLAUDE_CODE_EXECPATH before running bun cli.cjs.
+          # Simulate the same env so cli.cjs monkey-patches take effect.
+          exec_path="$HOME/.local/bin/claude.orig"
+          export CLAUDE_CODE_EXECPATH="$exec_path"
+
+          echo "── Checking process.execPath & Bun.isStandaloneExecutable ──"
+          bun -e "
+            // cli.cjs reads CLAUDE_CODE_EXECPATH and patches process.execPath + Bun.isStandaloneExecutable
+            // Stop before cli.original.cjs runs by intercepting require
+            const Module = require('module');
+            const _orig = Module.prototype.require;
+            Module.prototype.require = function(id) {
+              if (id.includes('cli.original.cjs')) { return; }
+              return _orig.apply(this, arguments);
+            };
+            require('$HOME/.clawgod/cli.cjs');
+            const checks = {
+              execPath_patched: process.execPath === '$exec_path',
+              execPath_exists: require('fs').existsSync(process.execPath),
+              isStandaloneExecutable: Bun.isStandaloneExecutable === true,
+            };
+            console.log(JSON.stringify(checks));
+            const failed = Object.entries(checks).filter(([,v]) => !v);
+            if (failed.length) {
+              console.error('FAILED:', failed.map(([k]) => k).join(', '));
+              process.exit(1);
+            }
+          " 2>&1 || {
+            echo "::error::Runtime invariant check failed"
+            exit 1
+          }
+
+          echo "── Checking multitool dispatch (ugrep, bfs, rg) ──"
+          for tool in ugrep bfs rg; do
+            if ARGV0="$tool" "$exec_path" --version >/dev/null 2>&1; then
+              echo "  $tool dispatch: OK"
+            else
+              echo "::error::multitool dispatch failed for $tool via $exec_path"
+              exit 1
+            fi
+          done
+
+          echo "── Checking daemon spawn path (fv/DLt) ──"
+          bun -e "
+            const Module = require('module');
+            const _orig = Module.prototype.require;
+            Module.prototype.require = function(id) {
+              if (id.includes('cli.original.cjs')) { return; }
+              return _orig.apply(this, arguments);
+            };
+            require('$HOME/.clawgod/cli.cjs');
+            if (Bun.isStandaloneExecutable !== true) {
+              console.error('fv()=false → daemon/fork will break');
+              process.exit(1);
+            }
+            console.log('DLt path: native (prefixArgs=[]) ✓');
+          " 2>&1 || {
+            echo "::error::Daemon spawn path broken (Bun.isStandaloneExecutable not patched)"
+            exit 1
+          }
+
+          echo "── Checking openai-proxy.cjs exists ──"
+          test -f "$HOME/.clawgod/openai-proxy.cjs" || { echo "::error::openai-proxy.cjs missing"; exit 1; }
+          echo "  openai-proxy.cjs: OK ($(wc -c < "$HOME/.clawgod/openai-proxy.cjs") bytes)"
+
+          echo "── All functional checks passed ──"
+
       - name: Publish supported-Claude-version badge
         # Write the version we just verified end-to-end to a JSON file on the
         # `badges` branch (force-pushed; that branch holds nothing else and is
