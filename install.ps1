@@ -1582,6 +1582,31 @@ const patches = [
     replacer: () => '#22c55e',
   },
   {
+    name: 'Theme claude color → green (ANSI)',
+    pattern: /claude:"ansi:redBright"/g,
+    replacer: () => 'claude:"ansi:greenBright"',
+  },
+  {
+    name: 'Shimmer → green (ANSI)',
+    pattern: /claudeShimmer:"ansi:yellowBright"/g,
+    replacer: () => 'claudeShimmer:"ansi:greenBright"',
+  },
+  {
+    name: 'Brief label claude color → green (RGB dark)',
+    pattern: /briefLabelClaude:"rgb\(215,119,87\)"/g,
+    replacer: () => 'briefLabelClaude:"rgb(34,197,94)"',
+  },
+  {
+    name: 'Brief label claude color → green (RGB light)',
+    pattern: /briefLabelClaude:"rgb\(255,153,51\)"/g,
+    replacer: () => 'briefLabelClaude:"rgb(22,163,74)"',
+  },
+  {
+    name: 'Brief label claude color → green (ANSI)',
+    pattern: /briefLabelClaude:"ansi:redBright"/g,
+    replacer: () => 'briefLabelClaude:"ansi:greenBright"',
+  },
+  {
     name: 'macOS Cmd+V image paste fallback to clipboard read',
     pattern: /if\(([\w$]+)\.length===0&&([\w$]+)\.length>0\)([\w$]+)\("input_image_drag","read_failed"\),([\w$]+)\.push\(\.\.\.\2\)/g,
     replacer: (m, L, R, at, D) =>
