@@ -1497,6 +1497,31 @@ const patches = [
     pattern: /#da7756/g,
     replacer: () => '#22c55e',
   },
+  {
+    name: 'Theme claude color → green (ANSI)',
+    pattern: /claude:"ansi:redBright"/g,
+    replacer: () => 'claude:"ansi:greenBright"',
+  },
+  {
+    name: 'Shimmer → green (ANSI)',
+    pattern: /claudeShimmer:"ansi:yellowBright"/g,
+    replacer: () => 'claudeShimmer:"ansi:greenBright"',
+  },
+  {
+    name: 'Brief label claude color → green (RGB dark)',
+    pattern: /briefLabelClaude:"rgb\(215,119,87\)"/g,
+    replacer: () => 'briefLabelClaude:"rgb(34,197,94)"',
+  },
+  {
+    name: 'Brief label claude color → green (RGB light)',
+    pattern: /briefLabelClaude:"rgb\(255,153,51\)"/g,
+    replacer: () => 'briefLabelClaude:"rgb(22,163,74)"',
+  },
+  {
+    name: 'Brief label claude color → green (ANSI)',
+    pattern: /briefLabelClaude:"ansi:redBright"/g,
+    replacer: () => 'briefLabelClaude:"ansi:greenBright"',
+  },
 
   // ── macOS Cmd+V 图片粘贴修复 ──
 
